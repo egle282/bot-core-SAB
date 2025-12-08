@@ -1,0 +1,3 @@
+curl -L https://saveas.pro/assets/demo-save.png -o public/assets/demo-save.png
+curl -L https://saveas.pro/assets/demo-ask.png -o public/assets/demo-ask.png
+curl -L https://saveas.pro/assets/demo-miniapp.png -o public/assets/demo-miniapp.png
