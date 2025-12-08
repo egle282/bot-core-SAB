@@ -7,7 +7,7 @@ start_router = Router()
 @start_router.message(Command("start"))
 async def cmd_start(message: Message):
     text = (
-        "🌟 Добро пожаловать в SaveAs Pro!\n\n"
+        "🌟 Добро пожаловать в Bot-core-SAB Pro!\n\n"
         "Сохраняйте знания одним сообщением:\n"
         "→ Перешлите пост и напишите `/save`\n"
         "→ Или просто `/save Текст заметки`\n\n"
