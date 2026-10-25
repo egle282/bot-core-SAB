@@ -1,28 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { add_to_waitlist } from '../../../backend/lib/notion_client';
-import { send_alert_to_admin } from '../../../backend/lib/telegram_alert';
+
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, name, telegram } = await req.json();
+    const body = await req.json();
+    const { email, name, telegram } = body;
 
-    if (!email || !email.includes('@')) {
-      return NextResponse.json({ error: 'Неверный email' }, { status: 400 });
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return NextResponse.json({ error: 'Неверный email адрес' }, { status: 400 });
     }
 
-    const page_id = await add_to_waitlist(email, name, telegram);
+    // Проксируем запрос в Python FastAPI backend
+    const response = await fetch(`${BACKEND_URL}/api/waitlist`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, name: name || '', telegram: telegram || '' }),
+    });
 
-    await send_alert_to_admin(
-      `📩 Новый в waitlist (с лендинга)!\n` +
-      `📧 ${email}\n` +
-      `👤 ${name || '—'}\n` +
-      `📱 ${telegram || '—'}\n` +
-      `Notion: https://www.notion.so/${page_id?.replace('-', '') || 'N/A'}`
-    );
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errorData.detail || errorData.error || 'Ошибка добавления в waitlist' },
+        { status: response.status }
+      );
+    }
 
-    return NextResponse.json({ status: 'ok' });
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (e: any) {
-    console.error('[API] Ошибка:', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error('[API Proxy] Ошибка при обращении к бэкенду:', e);
+    return NextResponse.json(
+      { error: 'Внутренняя ошибка сервера или бэкенд недоступен' },
+      { status: 500 }
+    );
   }
 }

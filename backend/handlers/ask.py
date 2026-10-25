@@ -1,8 +1,12 @@
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
-from ..api.services.ai import rag_answer
 import logging
+
+try:
+    from ..services.ai import rag_answer
+except (ImportError, ValueError):
+    from services.ai import rag_answer
 
 logger = logging.getLogger(__name__)
 
@@ -10,8 +14,7 @@ ask_router = Router()
 
 @ask_router.message(Command("ask"))
 async def cmd_ask(message: Message):
-    # Извлекаем вопрос после "/ask "
-    question = message.text[5:].strip()
+    question = (message.text or "")[5:].strip()
     
     if not question:
         help_text = (
@@ -29,10 +32,8 @@ async def cmd_ask(message: Message):
     logger.info(f"[RAG] Запрос от user={user_id}: '{question[:50]}...'")
 
     try:
-        # Генерируем ответ через RAG
         answer = await rag_answer(question, user_id=user_id)
         
-        # Форматируем ответ
         if "Не знаю" in answer or "извините" in answer.lower():
             response = (
                 "🔍 *Не найдено релевантных заметок.*\n\n"
@@ -42,7 +43,6 @@ async def cmd_ask(message: Message):
             )
             await message.answer(response, parse_mode="Markdown")
         else:
-            # Убираем возможные артефакты (например, "Ответ:" в начале)
             clean_answer = answer
             if clean_answer.startswith("Ответ:"):
                 clean_answer = clean_answer[6:].strip()
@@ -55,11 +55,9 @@ async def cmd_ask(message: Message):
             )
             await message.answer(response, parse_mode="Markdown")
 
-        # Логируем успешный запрос
         logger.info(f"[RAG] Ответ для user={user_id}: '{answer[:60]}...'")
 
     except Exception as e:
-        error_msg = f"⚠️ Ошибка ИИ: {str(e)[:100]}"
         logger.error(f"[RAG] Ошибка для user={user_id}: {e}")
         await message.answer(
             "❌ Не удалось обработать запрос.\n"

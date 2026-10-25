@@ -1,8 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from ..lib.notion_client import add_to_waitlist
-from ..lib.telegram_alert import send_alert_to_admin
+
+try:
+    from ...lib.notion_client import add_to_waitlist
+    from ...lib.telegram_alert import send_alert_to_admin
+except (ImportError, ValueError):
+    from lib.notion_client import add_to_waitlist
+    from lib.telegram_alert import send_alert_to_admin
 
 router = APIRouter()
 
@@ -18,16 +23,16 @@ async def join_waitlist(req: WaitlistRequest):
     
     try:
         page_id = await add_to_waitlist(req.email, req.name, req.telegram)
+        notion_link = f"https://www.notion.so/{page_id.replace('-', '')}" if page_id else "N/A"
         
         await send_alert_to_admin(
             f"📩 Новый в waitlist!\n"
             f"📧 {req.email}\n"
             f"👤 {req.name or '—'}\n"
             f"📱 {req.telegram or '—'}\n"
-            f"Notion: https://www.notion.so/{page_id.replace('-', '')}"
+            f"Notion: {notion_link}"
         )
         
         return {"status": "ok", "msg": "Спасибо! Проверьте почту."}
-    
     except Exception as e:
         raise HTTPException(500, f"Ошибка: {e}")

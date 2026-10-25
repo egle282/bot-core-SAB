@@ -1,15 +1,20 @@
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
-from ..models import SavedItem, Session, engine
-from ..api.services.ai import semantic_search
 from typing import List
+
+try:
+    from ..models import SavedItem, Session, engine
+    from ..services.ai import semantic_search
+except (ImportError, ValueError):
+    from models import SavedItem, Session, engine
+    from services.ai import semantic_search
 
 search_router = Router()
 
 @search_router.message(Command("search"))
 async def cmd_search(message: Message):
-    query = message.text[8:].strip()
+    query = (message.text or "")[8:].strip()
     if not query:
         await message.answer("🔍 Введите слово после /search")
         return
@@ -26,7 +31,6 @@ async def cmd_search(message: Message):
         try:
             results_semantic = await semantic_search(query, user_id, top_k=2)
         except Exception as e:
-            print(f"[Search] Semantic error: {e}")
             results_semantic = []
 
         # Объединяем, убираем дубли

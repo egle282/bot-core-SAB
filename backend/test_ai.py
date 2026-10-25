@@ -1,22 +1,28 @@
 import asyncio
+import json
 import os
-from api.services.ai import generate_summary, get_embedding, rag_answer
+import sys
+
+# Обеспечиваем доступность модулей backend при прямом запуске
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from services.ai import generate_summary, get_embedding, rag_answer
 from models import SavedItem, Session, engine
 
-os.environ["OLLAMA_URL"] = "http://localhost:11434"
+os.environ.setdefault("OLLAMA_URL", "http://localhost:11434")
 
 async def test():
     text = "В 2025 году вышел бот SaveAsBot, который позволяет сохранять контент в Telegram и искать по смыслу."
     
-    print("Тест summary...")
+    print("--- 1. Тест summary ---")
     summary = await generate_summary(text)
-    print("✅", summary)
+    print("✅ Результат:", summary)
     
-    print("\nТест embedding...")
+    print("\n--- 2. Тест embedding ---")
     emb = await get_embedding(text)
-    print("✅ Размер:", len(emb))
+    print("✅ Размер вектора:", len(emb))
     
-    # Сохраним тестовую заметку для RAG
+    # Сохраняем тестовую заметку для проверки RAG
     with Session(engine) as session:
         item = SavedItem(
             user_id=123,
@@ -28,9 +34,9 @@ async def test():
         session.add(item)
         session.commit()
     
-    print("\nТест RAG...")
+    print("\n--- 3. Тест RAG ---")
     answer = await rag_answer("Что делает SaveAsBot?", user_id=123)
-    print("✅", answer)
+    print("✅ Ответ:", answer)
 
 if __name__ == "__main__":
     asyncio.run(test())
