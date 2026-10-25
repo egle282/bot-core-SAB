@@ -62,8 +62,10 @@ yarn-error.log*
 htmlcov/
 .ruff_cache/
 
-# Local documentation generator & portfolio archives
+# Local documentation generator, dumps & portfolio archives
 docPRO/
+project_dump.txt
+*.dump.txt
 
 # AI agent workspace folders & adapters (local tooling)
 .agents/
