@@ -66,6 +66,7 @@ htmlcov/
 docPRO/
 project_dump.txt
 *.dump.txt
+PROJECT_CONTEXT.md
 
 # AI agent workspace folders & adapters (local tooling)
 .agents/
